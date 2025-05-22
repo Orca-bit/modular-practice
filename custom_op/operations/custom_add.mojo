@@ -76,3 +76,22 @@ struct AddOneCustom:
         x: InputTensor,
     ) raises -> IndexList[x.rank]:
         raise "NotImplemented"
+
+
+@compiler.register("custom_pow2_add")
+struct CustomPow2Add:
+    @staticmethod
+    def execute[
+        target: StaticString
+    ](
+        output: OutputTensor,
+        x: InputTensor[type = output.type, rank = output.rank],
+        y: InputTensor[type = output.type, rank = output.rank],
+        ctx: DeviceContextPtr,
+    ):
+        @parameter
+        @always_inline
+        fn run[width: Int](idx: IndexList[x.rank]) -> SIMD[x.type, width]:
+            return x.load[width](idx) ** 2 + y.load[width](idx)
+
+        foreach[run, target=target](output, ctx)
