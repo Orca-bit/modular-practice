@@ -8,7 +8,7 @@ op_library = CustomOpLibrary(mojo_kernels)
 mojo_fused_attention = op_library.fused_attention_custom[
     {
         "BN": 8,
-        "BD": 8,
+        "BD": 32,
     }
 ]
 
