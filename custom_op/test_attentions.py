@@ -28,6 +28,7 @@ def main():
     k = torch.randn((40, 128), dtype=torch.float32, device=device)
     v = torch.randn((40, 128), dtype=torch.float32, device=device)
     print(fused_attention(q, k, v))
-    
+
+
 if __name__ == "__main__":
     main()

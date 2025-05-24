@@ -355,8 +355,13 @@ fn fused_attention_kernel[
         K_tile = K.tile[BN_1, D](tile_n_idx, 0)
         V_tile = V.tile[BN_1, BD](tile_n_idx, block_idx.x)
         S = matmul["gpu", transpose_b=True](Q_tile, K_tile)
-        m_2 = max(m_1, rebind[__type_of(m_1)](max[axis=1](S)))
-        l_2 = exp(m_1 - m_2) * l_1 + sum[axis=1](exp(S - m_2))
+        m_2 = max(
+            m_1, rebind[__type_of(m_1)](max[axis=1](S).reshape[Layout(BN, 1)]())
+        )
+        l_2 = (
+            exp(m_1 - m_2) * l_1
+            + sum[axis=1](exp(S - m_2)).reshape[Layout(BN, 1)]()
+        )
         P = exp(S - m_2) / l_2
         O_j = O_i * (l_1 / l_2) * exp(m_1 - m_2) + matmul["gpu"](P, V_tile)
         m_1.copy_from(m_2)
