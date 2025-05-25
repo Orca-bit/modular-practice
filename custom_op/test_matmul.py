@@ -18,7 +18,7 @@ class MojoKernels:
                     "algorithm": algorithm,
                 }
             ]
-        return self.kernels[key]
+        return self.kernels[algorithm]
 
 
 mojo_kernels_factory = MojoKernels()
