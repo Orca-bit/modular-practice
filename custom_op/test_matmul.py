@@ -89,13 +89,13 @@ def perf_matmul(algorithm: str):
     dtype = torch.float32
     lhs = torch.randn((128, 64), dtype=dtype, device=device)
     rhs = torch.randn((64, 128), dtype=dtype, device=device)
-    _ = matmul_mojo(mojo_matmul_fn, lhs, rhs)
+    _res = matmul_mojo(mojo_matmul_fn, lhs, rhs)
 
     import time
 
     start = time.time()
     for _ in range(1000):
-        _ = matmul_mojo(mojo_matmul_fn, lhs, rhs)
+        _res = matmul_mojo(mojo_matmul_fn, lhs, rhs)
     end = time.time()
     print(f"\n{algorithm} matmul perf results:")
     print(f"time: {end - start}s")
