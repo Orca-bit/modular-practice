@@ -93,6 +93,7 @@ def perf_matmul(algorithm: str):
 
     import time
 
+    print(f"Starting {algorithm} matmul perf test...")
     start = time.time()
     for _ in range(1000):
         _res = matmul_mojo(mojo_matmul_fn, lhs, rhs)
