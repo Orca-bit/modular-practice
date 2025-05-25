@@ -81,3 +81,4 @@ def test_matmul(algorithm: str):
 
 if __name__ == "__main__":
     test_matmul("naive")
+    test_matmul("tiled")
