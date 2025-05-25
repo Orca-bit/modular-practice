@@ -112,8 +112,9 @@ def perf_matmul(algorithm: str):
 
 def test():
     test_matmul("naive")
-    test_matmul("naive")
+    perf_matmul("naive")
     test_matmul("tiled")
+    perf_matmul("tiled")
 
 
 def perf():
