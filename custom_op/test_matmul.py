@@ -3,17 +3,16 @@ from pathlib import Path
 from max.torch import CustomOpLibrary
 from typing import Callable
 
-mojo_kernels = Path(__file__).parent / "operations"
-op_library = CustomOpLibrary(mojo_kernels)
-
 
 class MojoKernels:
     def __init__(self):
+        mojo_kernels = Path(__file__).parent / "operations"
+        self.op_library = CustomOpLibrary(mojo_kernels)
         self.kernels = dict()
 
     def __getitem__(self, algorithm: str):
         if algorithm not in self.kernels:
-            self.kernels[algorithm] = op_library.mojo_matmul[
+            self.kernels[algorithm] = self.op_library.mojo_matmul[
                 {
                     "algorithm": algorithm,
                 }
