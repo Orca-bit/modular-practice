@@ -19,6 +19,48 @@ def matmul_naive(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     return result
 
 
+def check_close(
+    mojo_res: torch.Tensor,
+    torch_res: torch.Tensor,
+    rtol: float = 1e-5,
+    atol: float = 1e-8,
+):
+    # Calculate the absolute difference
+    abs_diff = torch.abs(mojo_res - torch_res)
+
+    # Find elements where the difference is greater than the tolerance
+    # Formula for allclose: absolute(input - other) <= atol + rtol * absolute(other)
+    not_close_mask = abs_diff > (atol + rtol * torch.abs(torch_res))
+
+    indices = torch.nonzero(not_close_mask)
+
+    if indices.numel() > 0:
+        print(f"Found {indices.shape[0]} elements that are not close.")
+        for i in range(
+            min(indices.shape[0], 10)
+        ):  # Print at most 10 differing elements
+            idx_tuple = tuple(indices[i].tolist())
+            mojo_val = mojo_res[idx_tuple]
+            torch_val = torch_res[idx_tuple]
+            diff_val = abs_diff[idx_tuple]
+            print(
+                f"  Index {idx_tuple}: Mojo={mojo_val:.6f}, Torch={torch_val:.6f}, Diff={diff_val:.6f}"
+            )
+    else:
+        # This case might happen if allclose fails due to NaN or Inf, but not numerical difference
+        # or if the custom tolerance check above is stricter/different than torch.allclose's internal one.
+        print(
+            "Allclose is False, but no specific differing elements found with custom tolerance check."
+        )
+        print(
+            "This might be due to NaN/Inf values or differences in tolerance parameters."
+        )
+        print(f"mojo_res contains NaN: {torch.isnan(mojo_res).any()}")
+        print(f"torch_res contains NaN: {torch.isnan(torch_res).any()}")
+        print(f"mojo_res contains Inf: {torch.isinf(mojo_res).any()}")
+        print(f"torch_res contains Inf: {torch.isinf(torch_res).any()}")
+
+
 def test_naive():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = torch.float32
@@ -26,53 +68,13 @@ def test_naive():
     rhs = torch.randn((64, 128), dtype=dtype, device=device)
     mojo_res = matmul_naive(lhs, rhs)
     torch_res = torch.matmul(lhs, rhs)
-    print("Mojo Result:")
-    print(mojo_res)
-    print("PyTorch Result:")
-    print(torch_res)
 
     all_close = torch.allclose(mojo_res, torch_res)
     print(f"torch.allclose result: {all_close}")
 
     if not all_close:
         print("\nElements not close:")
-        # Calculate the absolute difference
-        abs_diff = torch.abs(mojo_res - torch_res)
-        # Get default tolerances if not specified, or use your own
-        rtol = torch.get_default_dtype() == torch.float32 and 1e-5 or 1e-8
-        atol = torch.get_default_dtype() == torch.float32 and 1e-8 or 1e-5
-
-        # Find elements where the difference is greater than the tolerance
-        # Formula for allclose: absolute(input - other) <= atol + rtol * absolute(other)
-        not_close_mask = abs_diff > (atol + rtol * torch.abs(torch_res))
-
-        indices = torch.nonzero(not_close_mask)
-
-        if indices.numel() > 0:
-            print(f"Found {indices.shape[0]} elements that are not close.")
-            for i in range(
-                min(indices.shape[0], 10)
-            ):  # Print at most 10 differing elements
-                idx_tuple = tuple(indices[i].tolist())
-                mojo_val = mojo_res[idx_tuple]
-                torch_val = torch_res[idx_tuple]
-                diff_val = abs_diff[idx_tuple]
-                print(
-                    f"  Index {idx_tuple}: Mojo={mojo_val:.6f}, Torch={torch_val:.6f}, Diff={diff_val:.6f}"
-                )
-        else:
-            # This case might happen if allclose fails due to NaN or Inf, but not numerical difference
-            # or if the custom tolerance check above is stricter/different than torch.allclose's internal one.
-            print(
-                "Allclose is False, but no specific differing elements found with custom tolerance check."
-            )
-            print(
-                "This might be due to NaN/Inf values or differences in tolerance parameters."
-            )
-            print(f"mojo_res contains NaN: {torch.isnan(mojo_res).any()}")
-            print(f"torch_res contains NaN: {torch.isnan(torch_res).any()}")
-            print(f"mojo_res contains Inf: {torch.isinf(mojo_res).any()}")
-            print(f"torch_res contains Inf: {torch.isinf(torch_res).any()}")
+        check_close(mojo_res, torch_res)
 
 
 if __name__ == "__main__":
