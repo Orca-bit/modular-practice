@@ -45,7 +45,7 @@ fn naive_matmul_gpu[
         b_tile = b.tile[1, BN](k, bidx)
         dst_reg += a_tile[row, 0] * b_tile[0, col]
 
-    dst[row, col] += dst_reg
+    dst[row, col] = dst_reg
 
 
 @compiler.register("mojo_matmul")
