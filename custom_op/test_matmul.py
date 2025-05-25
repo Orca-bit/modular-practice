@@ -26,6 +26,8 @@ def test_naive():
     rhs = torch.randn((64, 128), dtype=dtype, device=device)
     mojo_res = matmul_naive(lhs, rhs)
     torch_res = torch.matmul(lhs, rhs)
+    print(mojo_res)
+    print(torch_res)
     print(torch.allclose(mojo_res, torch_res))
 
 
