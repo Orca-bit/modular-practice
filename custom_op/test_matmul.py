@@ -79,6 +79,38 @@ def test_matmul(algorithm: str):
         check_close(mojo_res, torch_res)
 
 
-if __name__ == "__main__":
+def perf_matmul(algorithm: str):
+    mojo_matmul_fn = op_library.mojo_matmul[
+        {
+            "algorithm": algorithm,
+        }
+    ]
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    dtype = torch.float32
+    lhs = torch.randn((128, 64), dtype=dtype, device=device)
+    rhs = torch.randn((64, 128), dtype=dtype, device=device)
+    _ = matmul_mojo(mojo_matmul_fn, lhs, rhs)
+
+    import time
+
+    start = time.time()
+    for _ in range(1000):
+        _ = matmul_mojo(mojo_matmul_fn, lhs, rhs)
+    end = time.time()
+    print(f"\n{algorithm} matmul perf results:")
+    print(f"time: {end - start}s")
+
+
+def test():
     test_matmul("naive")
     test_matmul("tiled")
+
+
+def perf():
+    perf_matmul("naive")
+    perf_matmul("tiled")
+
+
+if __name__ == "__main__":
+    test()
+    perf()
