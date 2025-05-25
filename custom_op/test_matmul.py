@@ -103,18 +103,16 @@ def perf_matmul(algorithm: str):
 
     print(f"\nStarting {algorithm} matmul perf test...")
     start = time.time()
-    for _ in range(1000):
+    for _ in range(100):
         _res = matmul_mojo(mojo_matmul_fn, lhs, rhs)
     end = time.time()
-    print(f"{algorithm} matmul perf results:")
+    print(f"100 times {algorithm} matmul perf results:")
     print(f"time: {end - start}s")
 
 
 def test():
     test_matmul("naive")
-    perf_matmul("naive")
     test_matmul("tiled")
-    perf_matmul("tiled")
 
 
 def perf():
@@ -122,6 +120,10 @@ def perf():
     perf_matmul("tiled")
 
 
-if __name__ == "__main__":
+def main():
     test()
     perf()
+
+
+if __name__ == "__main__":
+    main()
