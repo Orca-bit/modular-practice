@@ -7,6 +7,23 @@ mojo_kernels = Path(__file__).parent / "operations"
 op_library = CustomOpLibrary(mojo_kernels)
 
 
+class MojoKernels:
+    def __init__(self):
+        self.kernels = dict()
+
+    def __getitem__(self, algorithm: str):
+        if algorithm not in self.kernels:
+            self.kernels[algorithm] = op_library.mojo_matmul[
+                {
+                    "algorithm": algorithm,
+                }
+            ]
+        return self.kernels[key]
+
+
+mojo_kernels_factory = MojoKernels()
+
+
 def matmul_mojo(func: Callable, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     m, _ = a.shape
     _, n = b.shape
@@ -58,11 +75,7 @@ def check_close(
 
 
 def test_matmul(algorithm: str):
-    mojo_matmul_fn = op_library.mojo_matmul[
-        {
-            "algorithm": algorithm,
-        }
-    ]
+    mojo_matmul_fn = mojo_kernels_factory[algorithm]
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = torch.float32
     lhs = torch.randn((128, 64), dtype=dtype, device=device)
@@ -80,11 +93,7 @@ def test_matmul(algorithm: str):
 
 
 def perf_matmul(algorithm: str):
-    mojo_matmul_fn = op_library.mojo_matmul[
-        {
-            "algorithm": algorithm,
-        }
-    ]
+    mojo_matmul_fn = mojo_kernels_factory[algorithm]
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = torch.float32
     lhs = torch.randn((128, 64), dtype=dtype, device=device)
@@ -93,12 +102,12 @@ def perf_matmul(algorithm: str):
 
     import time
 
-    print(f"Starting {algorithm} matmul perf test...")
+    print(f"\nStarting {algorithm} matmul perf test...")
     start = time.time()
     for _ in range(1000):
         _res = matmul_mojo(mojo_matmul_fn, lhs, rhs)
     end = time.time()
-    print(f"\n{algorithm} matmul perf results:")
+    print(f"{algorithm} matmul perf results:")
     print(f"time: {end - start}s")
 
 
