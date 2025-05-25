@@ -113,17 +113,9 @@ def perf_matmul(algorithm: str):
 def test():
     test_matmul("naive")
     test_matmul("tiled")
-
-
-def perf():
     perf_matmul("naive")
     perf_matmul("tiled")
 
 
-def main():
-    test()
-    perf()
-
-
 if __name__ == "__main__":
-    main()
+    test()
