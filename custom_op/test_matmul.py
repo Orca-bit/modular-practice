@@ -1,21 +1,17 @@
 import torch
 from pathlib import Path
 from max.torch import CustomOpLibrary
+from typing import Callable
 
 mojo_kernels = Path(__file__).parent / "operations"
 op_library = CustomOpLibrary(mojo_kernels)
-mojo_matmul_naive = op_library.mojo_matmul[
-    {
-        "algorithm": "naive",
-    }
-]
 
 
-def matmul_naive(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+def matmul_mojo(func: Callable, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     m, _ = a.shape
     _, n = b.shape
     result = torch.zeros((m, n), dtype=a.dtype, device=a.device)
-    mojo_matmul_naive(result, a, b)
+    func(result, a, b)
     return result
 
 
@@ -61,15 +57,21 @@ def check_close(
         print(f"torch_res contains Inf: {torch.isinf(torch_res).any()}")
 
 
-def test_naive():
+def test_matmul(algorithm: str):
+    mojo_matmul_fn = op_library.mojo_matmul[
+        {
+            "algorithm": algorithm,
+        }
+    ]
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = torch.float32
     lhs = torch.randn((128, 64), dtype=dtype, device=device)
     rhs = torch.randn((64, 128), dtype=dtype, device=device)
-    mojo_res = matmul_naive(lhs, rhs)
+    mojo_res = matmul_mojo(mojo_matmul_fn, lhs, rhs)
     torch_res = torch.matmul(lhs, rhs)
 
     all_close = torch.allclose(mojo_res, torch_res)
+    print(f"\n{algorithm} matmul test results:")
     print(f"torch.allclose result: {all_close}")
 
     if not all_close:
@@ -78,4 +80,4 @@ def test_naive():
 
 
 if __name__ == "__main__":
-    test_naive()
+    test_matmul("naive")
