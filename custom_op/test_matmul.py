@@ -14,7 +14,7 @@ class MojoKernels:
         if algorithm not in self.kernels:
             self.kernels[algorithm] = self.op_library.mojo_matmul[
                 {
-                    "algorithm": algorithm,
+                    "algorithm": algorithm[:],
                 }
             ]
         return self.kernels[algorithm]
