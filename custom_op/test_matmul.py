@@ -3,24 +3,19 @@ from pathlib import Path
 from max.torch import CustomOpLibrary
 from typing import Callable
 
+mojo_kernels = Path(__file__).parent / "operations"
+op_library = CustomOpLibrary(mojo_kernels)
+naive_matmul = op_library.mojo_matmul[
+    {
+        "algorithm": "naive",
+    }
+]
 
-class MojoKernels:
-    def __init__(self):
-        mojo_kernels = Path(__file__).parent / "operations"
-        self.op_library = CustomOpLibrary(mojo_kernels)
-        self.kernels = dict()
-
-    def __getitem__(self, algorithm: str):
-        if algorithm not in self.kernels:
-            self.kernels[algorithm] = self.op_library.mojo_matmul[
-                {
-                    "algorithm": algorithm[:],
-                }
-            ]
-        return self.kernels[algorithm]
-
-
-mojo_kernels_factory = MojoKernels()
+tiled_matmul = op_library.mojo_matmul[
+    {
+        "algorithm": "tiled",
+    }
+]
 
 
 def matmul_mojo(func: Callable, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -73,13 +68,12 @@ def check_close(
         print(f"torch_res contains Inf: {torch.isinf(torch_res).any()}")
 
 
-def test_matmul(algorithm: str):
-    mojo_matmul_fn = mojo_kernels_factory[algorithm]
+def test_matmul(func: Callable, algorithm: str):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = torch.float32
     lhs = torch.randn((128, 64), dtype=dtype, device=device)
     rhs = torch.randn((64, 128), dtype=dtype, device=device)
-    mojo_res = matmul_mojo(mojo_matmul_fn, lhs, rhs)
+    mojo_res = matmul_mojo(func, lhs, rhs)
     torch_res = torch.matmul(lhs, rhs)
 
     all_close = torch.allclose(mojo_res, torch_res)
@@ -91,13 +85,12 @@ def test_matmul(algorithm: str):
         check_close(mojo_res, torch_res)
 
 
-def perf_matmul(algorithm: str):
-    mojo_matmul_fn = mojo_kernels_factory[algorithm]
+def perf_matmul(func: Callable, algorithm: str):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = torch.float32
     lhs = torch.randn((128, 64), dtype=dtype, device=device)
     rhs = torch.randn((64, 128), dtype=dtype, device=device)
-    _res = matmul_mojo(mojo_matmul_fn, lhs, rhs)
+    _res = matmul_mojo(func, lhs, rhs)
 
     import time
 
@@ -111,10 +104,10 @@ def perf_matmul(algorithm: str):
 
 
 def test():
-    test_matmul("naive")
-    test_matmul("tiled")
-    perf_matmul("naive")
-    perf_matmul("tiled")
+    test_matmul(naive_matmul, "naive")
+    test_matmul(tiled_matmul, "tiled")
+    perf_matmul(naive_matmul, "naive")
+    perf_matmul(tiled_matmul, "tiled")
 
 
 if __name__ == "__main__":
