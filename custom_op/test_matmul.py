@@ -97,7 +97,7 @@ def perf_matmul(func: Callable, algorithm: str):
     print(f"\nStarting {algorithm} matmul perf test...")
     start = time.time()
     for _ in range(100):
-        _res = matmul_mojo(mojo_matmul_fn, lhs, rhs)
+        _res = matmul_mojo(func, lhs, rhs)
     end = time.time()
     print(f"100 times {algorithm} matmul perf results:")
     print(f"time: {end - start}s")
