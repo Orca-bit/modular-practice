@@ -35,3 +35,7 @@ def tests():
     test_add_const(add_one, 1)
     test_add_const(add_two, 2)
     test_add_const(add_one, 1)
+
+
+if __name__ == "__main__":
+    tests()
