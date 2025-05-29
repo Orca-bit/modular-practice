@@ -33,8 +33,8 @@ fn naive_matmul_gpu[
     b: LayoutTensor[dtype, b_layout, MutableAnyOrigin],
     c: LayoutTensor[dtype, c_layout, MutableAnyOrigin],
 ):
-    col = thread_idx.y
-    row = thread_idx.x
+    col = thread_idx.x
+    row = thread_idx.y
     bidx = block_idx.x
     bidy = block_idx.y
 
