@@ -4,7 +4,6 @@ from torch._inductor.pattern_matcher import (
     PatternMatcherPass,
     register_replacement,
 )
-from typing import Callable, Iterable
 
 from pathlib import Path
 from max.torch import CustomOpLibrary
@@ -39,19 +38,7 @@ def custom_pass(graph: torch.fx.graph):
     count = patterns.apply(graph)
 
 
-def custom_backend(
-    graph: torch.fx.GraphModule, example_inputs: Iterable[torch.Tensor]
-) -> Callable:
-    from torch._inductor import config
-
-    current_config = config.get_config_copy()
-    from torch._inductor.compile_fx import compile_fx
-
-    current_config["post_grad_custom_post_pass"] = custom_pass
-    return compile_fx(graph, example_inputs, config_patches=current_config)
-
-
-@torch.compile(backend=custom_backend)
+@torch.compile(backend="inductor")
 def f_mojo(x: torch.Tensor, y: torch.tensor) -> torch.Tensor:
     return x**2 + y
 
@@ -61,6 +48,9 @@ def f_torch(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
 
 
 if __name__ == "__main__":
+    import torch._inductor.config as inductor_config
+
+    inductor_config.post_grad_custom_post_pass = custom_pass
     inp1 = torch.rand(3, 5)
     inp2 = torch.rand(3, 5)
     print(torch.allclose(f_torch(inp1, inp2), f_mojo(inp1, inp2)))
