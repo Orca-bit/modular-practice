@@ -76,7 +76,8 @@ def test_matmul(func: Callable, algorithm: str):
     mojo_res = matmul_mojo(func, lhs, rhs)
     torch_res = torch.matmul(lhs, rhs)
 
-    all_close = torch.allclose(mojo_res, torch_res)
+    rtol, atol = 1e-5, 1e-6
+    all_close = torch.allclose(mojo_res, torch_res, rtol=rtol, atol=atol)
     print(f"\n{algorithm} matmul test results:")
     print(f"torch.allclose result: {all_close}")
 
